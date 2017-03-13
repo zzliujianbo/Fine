@@ -1,0 +1,4 @@
+/storage/cache/*
+/storage/session/*
+/vendor
+composer.lock
