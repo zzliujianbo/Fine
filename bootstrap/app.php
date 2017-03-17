@@ -17,7 +17,7 @@ $app = Fine\Application::getInstance($base_path);
 
 $database = require_once '../src/config/database.php';
 
-$capsule = new Illuminate\Database\Capsule\Manager;
+$capsule = new Illuminate\Database\Capsule\Manager();
 
 // 添加数据库连接
 foreach ($database['connections'] as $key => $value) {
