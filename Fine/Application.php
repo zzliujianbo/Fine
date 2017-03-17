@@ -65,7 +65,7 @@ class Application
 
     private function initView()
     {
-        $v = new View($this->basePath . '/src/App/resources/views/');
+        $v = new View($this->basePath . '/src/resources/views/');
         $this->addSingleton($v, 'view');
     }
 
@@ -159,7 +159,6 @@ class Application
                 if (isset($obj['render_type'])) {
                     switch($obj['render_type']) {
                         case 'view':
-                            $this->getView();
                             $this->getView()->render($obj['data']['view'], $obj['data']['data']);
                             return;
                     }

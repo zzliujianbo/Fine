@@ -7,6 +7,8 @@ use Fine\Controller;
 use Fine\Request;
 use Stringy\Stringy;
 
+use App\Models\User;
+
 class HomeController extends Controller
 {
 
