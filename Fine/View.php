@@ -45,7 +45,6 @@ class View {
 
     public function footer($filename, array $js = null)
     {
-
         require_once $this->viewPath($filename);
     }
 
