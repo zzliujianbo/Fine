@@ -36,7 +36,7 @@ if (! function_exists('checkbox')) {
         $attr['type'] = 'checkbox';
         if($checked) {
             $attr['checked'] = 'checked';
-        } 
+        }
         BuildTag::render('input', $attr);
     }
 }
