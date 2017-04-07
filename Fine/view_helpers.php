@@ -85,6 +85,7 @@ class BuildTag
         if($name) {
             $attr['id'] = $attr['name'] = $name;
         }
+        
 
         if($value) {
             $attr['value'] = $value;
