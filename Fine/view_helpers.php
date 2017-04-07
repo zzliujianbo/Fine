@@ -1,6 +1,6 @@
 <?php
 if (! function_exists('link_a')) {
-    function link_a($text, $url, $class = null, $style = null, $attr = [])
+    function link_a($text, $url, $class = null, $style = null, $attr = null)
     {
         $attr = BuildTag::mergeCss($class, $style, $attr);
         $attr['href'] = $url;
@@ -9,10 +9,63 @@ if (! function_exists('link_a')) {
 }
 
 if (! function_exists('textbox')) {
-    function textbox($name, $value, $class = null, $style = null, $attr = [])
+    function textbox($name, $value, $class = null, $style = null, $attr = null)
     {
         $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
+        $attr['type'] = 'text';
         BuildTag::render('input', $attr);
+    }
+}
+
+if (! function_exists('radioButton')) {
+    function radioButton($name, $value, $checked = false, $class = null, $style = null, $attr = null)
+    {
+        $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
+        $attr['type'] = 'radio';
+        if($checked) {
+            $attr['checked'] = 'checked';
+        }
+        BuildTag::render('input', $attr);
+    }
+}
+
+if (! function_exists('checkbox')) {
+    function checkbox($name, $value, $checked = false, $class = null, $style = null, $attr = null)
+    {
+        $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
+        $attr['type'] = 'checkbox';
+        if($checked) {
+            $attr['checked'] = 'checked';
+        }
+        BuildTag::render('input', $attr);
+    }
+}
+
+if (! function_exists('hidden')) {
+    function hidden($name, $value, $class = null, $style = null, $attr = null)
+    {
+        $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
+        $attr['type'] = 'hidden';
+        BuildTag::render('input', $attr);
+    }
+}
+
+if (! function_exists('dropDownList')) {
+    function dropDownList($name, $options = null, $class = null, $style = null, $attr = null)
+    {
+        $attr = BuildTag::mergeAttr($name, null, $class, $style, $attr);
+        $optionHtml = '';
+        if($options) {
+            if(is_array($options)) {
+                foreach ($options as $item) {
+                    $optionHtml .= '<option value="'. $item['value'] .'"' . (isset($item['selected']) ? ' selected=selected' : '') . '>' . $item['text'] . '</option>';
+                }
+            }
+            elseif (is_string($options)) {
+                $optionHtml .= $options;
+            }
+        }
+        BuildTag::render('select', $attr, $optionHtml, true);
     }
 }
 
