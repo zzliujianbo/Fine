@@ -3,7 +3,7 @@ if (! function_exists('link_a')) {
     function link_a($text, $url, $class = null, $style = null, $attr = null)
     {
         $attr = BuildTag::mergeCss($class, $style, $attr);
-        $attr['href'] = $url;
+        $attr['href'] = url($url);
         BuildTag::render('a', $attr, $text, true);
     }
 }
@@ -17,8 +17,8 @@ if (! function_exists('textbox')) {
     }
 }
 
-if (! function_exists('radioButton')) {
-    function radioButton($name, $value, $checked = false, $class = null, $style = null, $attr = null)
+if (! function_exists('radio')) {
+    function radio($name, $value, $checked = false, $class = null, $style = null, $attr = null)
     {
         $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
         $attr['type'] = 'radio';
@@ -50,8 +50,8 @@ if (! function_exists('hidden')) {
     }
 }
 
-if (! function_exists('dropDownList')) {
-    function dropDownList($name, $options = null, $class = null, $style = null, $attr = null)
+if (! function_exists('drop_down_list')) {
+    function drop_down_list($name, $options = null, $class = null, $style = null, $attr = null)
     {
         $attr = BuildTag::mergeAttr($name, null, $class, $style, $attr);
         $optionHtml = '';
@@ -99,7 +99,6 @@ class BuildTag
         }
         return $attr;
     }
-
 
     public static function render($tagName, $attr = null, $content = null, $closure = false)
     {

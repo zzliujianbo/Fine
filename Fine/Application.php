@@ -8,35 +8,46 @@ use Doctrine\Common\Cache\FilesystemCache;
 
 class Application
 {
-    protected $basePath;
+    protected $rootDir;
+
+    protected $rootUri;
 
     protected $routes = [];
 
     protected $dispatcher;
+
+    protected $controller;
+
+    protected $action;
+
+    protected $routeInfo;
 
     public function version()
     {
         return 'Fine (0.0.1)';
     }
 
-    public static function getInstance($basePath)
+    public static function getInstance($rootDir)
     {
-        $instance = new static($basePath);
+        $instance = new static($rootDir);
         return $instance->addSingleton($instance, 'app');
     }
 
-    private function __construct($basePath)
+    private function __construct($rootDir)
     {
-        $this->basePath = $basePath;
+        $this->rootDir = $rootDir;
         $this->init();
     }
 
     private function init()
     {
         date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
+
+        $this->rootUri = rtrim($_SERVER['SCRIPT_NAME'], '/index.php');
+        $this->initSession();
         //$this->initEvent();
-        //$this->initCache();
-        //$this->initView();
+        $this->initCache();
+        $this->initView();
     }
 
     private function initCache()
@@ -44,7 +55,7 @@ class Application
         $driver = env('CACHE_DRIVER');
         $doctrine = null;
         if ($driver === 'file') {
-            $doctrine = new FilesystemCache($this->basePath . '/storage/cache');
+            $doctrine = new FilesystemCache($this->rootDir . '/storage/cache');
         }
 
         $cache = [];
@@ -58,30 +69,30 @@ class Application
 
     private function initSession()
     {
-        $session_dir = $this->basePath . '/storage/session';
+        $session_dir = $this->rootDir . '/storage/session';
         session_save_path($session_dir);
         session_start();
     }
 
     private function initView()
     {
-        $v = new View($this->basePath . '/src/resources/views/');
+        $v = new View($this->rootDir . '/src/resources/views/');
         $this->addSingleton($v, 'view');
     }
 
     public function getCache()
     {
-        if (! $this->getSingleton('cache')) {
-            $this->initCache();
-        }
+        //if (! $this->getSingleton('cache')) {
+        //    $this->initCache();
+        //}
         return $this->getSingleton('cache');
     }
 
     public function getView()
     {
-        if (! $this->getSingleton('view')) {
-            $this->initView();
-        }
+        //if (! $this->getSingleton('view')) {
+        //    $this->initView();
+        //}
         return $this->getSingleton('view');
     }
 
@@ -108,7 +119,6 @@ class Application
     //public function run(bool $routeCache = false) //php7支持，php5不支持此种写法
     public function run($routeCache = false)
     {
-        $this->initSession();
         $obj = $this->dispatch($this->getDispatcher($routeCache));
         $this->render($obj);
     }
@@ -144,6 +154,9 @@ class Application
         $vars = $routeInfo[2];
 
         if(method_exists($handler['controller_class'], $handler['action'])) {
+            $this->routeInfo = $handler;
+            $this->controller = $handler['controller_class'];
+            $this->action = $handler['action'];
             $controller = new $handler['controller_class']();
             //return $controller->{$handler['action']}($vars);
             return call_user_func_array([$controller, $handler['action']], $vars);
@@ -199,7 +212,7 @@ class Application
             }
         }, [
             //'cacheFile' => __DIR__ . getenv('CACHE_FILE_DIR') . '/route.cache',
-            'cacheFile' => $this->basePath . '/storage/cache/route.cache',
+            'cacheFile' => $this->rootDir . '/storage/cache/route.cache',
             'cacheDisabled' => true,
         ]);
     }
@@ -251,7 +264,7 @@ class Application
 
     protected function addRoute($method, $uri, $action)
     {
-        $uri = '/'.trim($uri, '/');
+        $uri = '/'.trim($this->rootUri . '/' . $uri, '/');
 
         $this->routes[] = ['method' => $method, 'uri' => $uri, 'action' => $action];
     }
@@ -263,7 +276,27 @@ class Application
         return '/'.trim(str_replace('?'.$query, '', $_SERVER['REQUEST_URI']), '/');
     }
 
-    protected function getMethod()
+    public function getRootUri()
+    {
+        return $this->rootUri;
+    }
+
+    public function getController()
+    {
+        return $this->controller;
+    }
+
+    public function getAction()
+    {
+        return $this->action;
+    }
+
+    public function getRoute()
+    {
+        return $this->routeInfo;
+    }
+
+    public function getMethod()
     {
         if (isset($_POST['_method'])) {
             return strtoupper($_POST['_method']);
@@ -271,5 +304,4 @@ class Application
             return $_SERVER['REQUEST_METHOD'];
         }
     }
-
 }

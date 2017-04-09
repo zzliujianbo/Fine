@@ -128,8 +128,8 @@ if (! function_exists('random_str')) {
     }
 }
 
-if (! function_exists('encodeHTML')) {
-    function encodeHTML(&$str)
+if (! function_exists('encode_html')) {
+    function encode_html(&$str)
     {
         //htmlspecialchars($string,ENT_QUOTES);
         if (is_string($str)) {
@@ -139,12 +139,26 @@ if (! function_exists('encodeHTML')) {
     }
 }
 
-if (! function_exists('decodeHTML')) {
-    function decodeHTML($str)
+if (! function_exists('decode_html')) {
+    function decode_html($str)
     {
         if (is_string($str)) {
             return html_entity_decode($str, ENT_QUOTES, 'UTF-8');
         }
         return $str;
+    }
+}
+
+if (! function_exists('rootUri')) {
+    function root_uri()
+    {
+        return app()->getRootUri();
+    }
+}
+
+if (! function_exists('url')) {
+    function url($uri)
+    {
+        return root_uri() . $uri;
     }
 }

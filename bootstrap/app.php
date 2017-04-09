@@ -3,14 +3,14 @@
 require_once '../vendor/autoload.php';
 
 /********** 1.初始化根目录 **********/
-$base_path = realpath(__DIR__.'/../');
+$rootDir = realpath(__DIR__.'/../');
 
 /********** 2.加载配置文件 **********/
 $dotenv = new Dotenv\Dotenv('../src/');
 $dotenv->load();
 
 /********** 3.加载Application **********/
-$app = Fine\Application::getInstance($base_path);
+$app = Fine\Application::getInstance($rootDir);
 
 /********** 4.加载Eloquent ORM **********/
 // 参考 https://github.com/illuminate/database

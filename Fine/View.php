@@ -13,7 +13,7 @@ class View {
         $this->viewDir = $view_Dir;
     }
 
-    public function render($filename, $data = null)
+    public function render($data = null, $filename = null)
     {
         if ($data) {
             // $data = (array) $data;
@@ -34,9 +34,22 @@ class View {
             }
         }
 
+        if (! $filename) {
+            $action = app()->getAction();
+            $filename = $action;
+        }
+
+        if ($filename && strpos($filename, '/') !== 0) {
+            $controller = app()->getController();
+            $startIndex = strrpos($controller, '\\') + 1;
+            $endIndex = strripos($controller, 'Controller');
+            $dir = substr($controller, $startIndex, $endIndex - $startIndex );
+            $filename = $dir . '/' . $filename;
+        }
         //require_once $this->viewPath . trim($filename, '/') . '.view.php';
         $this->contains($filename);
     }
+
     public function header($filename, $title = null, array $css = null, array $js = null)
     {
         $this->title = $title;
@@ -62,12 +75,12 @@ class View {
     {
         //htmlspecialchars($string,ENT_QUOTES);
         //return htmlentities($str, ENT_QUOTES, 'UTF-8');
-        return encodeHTML($str);
+        return encode_html($str);
     }
 
     public function decode($str)
     {
         //return html_entity_decode($str, ENT_QUOTES, 'UTF-8');
-        return decodeHTML($str);
+        return decode_html($str);
     }
 }
