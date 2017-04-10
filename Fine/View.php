@@ -43,7 +43,7 @@ class View {
             $controller = app()->getController();
             $startIndex = strrpos($controller, '\\') + 1;
             $endIndex = strripos($controller, 'Controller');
-            $dir = substr($controller, $startIndex, $endIndex - $startIndex );
+            $dir = substr($controller, $startIndex, $endIndex - $startIndex);
             $filename = $dir . '/' . $filename;
         }
         //require_once $this->viewPath . trim($filename, '/') . '.view.php';
@@ -64,6 +64,11 @@ class View {
     public function contains($filename, array $params = null)
     {
         require_once $this->viewPath($filename);
+    }
+
+    public function layout($filename)
+    {
+
     }
 
     public function viewPath($filename)
