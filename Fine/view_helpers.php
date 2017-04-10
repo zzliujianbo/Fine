@@ -4,7 +4,7 @@ if (! function_exists('link_a')) {
     {
         $attr = BuildTag::mergeCss($class, $style, $attr);
         $attr['href'] = url($url);
-        BuildTag::render('a', $attr, $text, true);
+        return BuildTag::render('a', $attr, $text, true);
     }
 }
 
@@ -13,7 +13,7 @@ if (! function_exists('textbox')) {
     {
         $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
         $attr['type'] = 'text';
-        BuildTag::render('input', $attr);
+        return BuildTag::render('input', $attr);
     }
 }
 
@@ -25,7 +25,7 @@ if (! function_exists('radio')) {
         if($checked) {
             $attr['checked'] = 'checked';
         }
-        BuildTag::render('input', $attr);
+        return BuildTag::render('input', $attr);
     }
 }
 
@@ -37,7 +37,7 @@ if (! function_exists('checkbox')) {
         if($checked) {
             $attr['checked'] = 'checked';
         }
-        BuildTag::render('input', $attr);
+        return BuildTag::render('input', $attr);
     }
 }
 
@@ -46,7 +46,7 @@ if (! function_exists('hidden')) {
     {
         $attr = BuildTag::mergeAttr($name, $value, $class, $style, $attr);
         $attr['type'] = 'hidden';
-        BuildTag::render('input', $attr);
+        return BuildTag::render('input', $attr);
     }
 }
 
@@ -65,7 +65,7 @@ if (! function_exists('drop_down_list')) {
                 $optionHtml .= $options;
             }
         }
-        BuildTag::render('select', $attr, $optionHtml, true);
+        return BuildTag::render('select', $attr, $optionHtml, true);
     }
 }
 
@@ -120,6 +120,6 @@ class BuildTag
         } else {
             $html .= ' />';
         }
-        echo $html;
+        return $html;
     }
 }

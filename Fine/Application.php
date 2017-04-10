@@ -3,14 +3,21 @@
 namespace Fine;
 
 use FastRoute;
+use Jenssegers\Blade\Blade;
 use PHPFluent\Cache\Cache;
 use Doctrine\Common\Cache\FilesystemCache;
 
 class Application
 {
+    protected $rootUri;
+
     protected $rootDir;
 
-    protected $rootUri;
+    protected $cacheDir;
+
+    protected $viewDir;
+
+    protected $sessionDir;
 
     protected $routes = [];
 
@@ -44,10 +51,13 @@ class Application
         date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
         $this->rootUri = rtrim($_SERVER['SCRIPT_NAME'], '/index.php');
+        $this->cacheDir = $this->rootDir . '/storage/cache';
+        $this->viewDir = $this->rootDir . '/src/resources/views';
+        $this->sessionDir = $this->rootDir . '/storage/session';
         $this->initSession();
         //$this->initEvent();
-        $this->initCache();
-        $this->initView();
+        //$this->initCache();
+        //$this->initView();
     }
 
     private function initCache()
@@ -55,7 +65,7 @@ class Application
         $driver = env('CACHE_DRIVER');
         $doctrine = null;
         if ($driver === 'file') {
-            $doctrine = new FilesystemCache($this->rootDir . '/storage/cache');
+            $doctrine = new FilesystemCache($this->cacheDir);
         }
 
         $cache = [];
@@ -69,30 +79,36 @@ class Application
 
     private function initSession()
     {
-        $session_dir = $this->rootDir . '/storage/session';
-        session_save_path($session_dir);
+        session_save_path($this->sessionDir);
         session_start();
     }
 
     private function initView()
     {
-        $v = new View($this->rootDir . '/src/resources/views/');
-        $this->addSingleton($v, 'view');
+        $blade = new Blade($this->viewDir, $this->cacheDir);
+        $compiler = $blade->compiler();
+        $controls = ['link_a', 'textbox', 'radio', 'checkbox', 'hidden', 'drop_down_list'];
+        foreach ($controls as $value) {
+            $compiler->directive($value, function($expression) use ($value) {
+                return "<?php echo " . $value . "({$expression})?>";
+            });
+        }
+        $this->addSingleton($blade, 'view');
     }
 
     public function getCache()
     {
-        //if (! $this->getSingleton('cache')) {
-        //    $this->initCache();
-        //}
+        if (! $this->getSingleton('cache')) {
+            $this->initCache();
+        }
         return $this->getSingleton('cache');
     }
 
     public function getView()
     {
-        //if (! $this->getSingleton('view')) {
-        //    $this->initView();
-        //}
+        if (! $this->getSingleton('view')) {
+            $this->initView();
+        }
         return $this->getSingleton('view');
     }
 
@@ -138,12 +154,12 @@ class Application
         $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
         switch ($routeInfo[0]) {
-        case FastRoute\Dispatcher::NOT_FOUND:
+            case FastRoute\Dispatcher::NOT_FOUND:
             return 'Fine 404';
-        case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
+            case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
             $allowedMethods = $routeInfo[1];
             return 'Fine 405';
-        case FastRoute\Dispatcher::FOUND:
+            case FastRoute\Dispatcher::FOUND:
             return $this->handleFoundRoute($routeInfo);
         }
     }
@@ -172,8 +188,8 @@ class Application
                 if (isset($obj['render_type'])) {
                     switch($obj['render_type']) {
                         case 'view':
-                            $this->getView()->render($obj['data']['view'], $obj['data']['data']);
-                            return;
+                        echo $this->getView()->make($obj['data']['view'], $obj['data']['data'] ?: []);
+                        return;
                     }
                 } else {
                     echo to_json($obj);
@@ -212,7 +228,7 @@ class Application
             }
         }, [
             //'cacheFile' => __DIR__ . getenv('CACHE_FILE_DIR') . '/route.cache',
-            'cacheFile' => $this->rootDir . '/storage/cache/route.cache',
+            'cacheFile' => $this->cacheDir . '/route.cache',
             'cacheDisabled' => true,
         ]);
     }

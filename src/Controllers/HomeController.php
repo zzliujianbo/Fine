@@ -22,6 +22,6 @@ class HomeController extends Controller
 
     public function getIndex()
     {
-        return render_view(null, 'index');
+        return view('home.index');
     }
 }

@@ -45,8 +45,8 @@ if (! function_exists('app')) {
         return Singleton::getInstance('app');
     }
 }
-if (! function_exists('render_view')) {
-    function render_view($view, $data = null)
+if (! function_exists('view')) {
+    function view($view, $data = null)
     {
         return ['render_type' => 'view', 'data' => ['view' => $view, 'data' => $data]];
     }
@@ -159,6 +159,9 @@ if (! function_exists('rootUri')) {
 if (! function_exists('url')) {
     function url($uri)
     {
-        return root_uri() . $uri;
+        if(stripos($uri, 'http') !== 0) {
+            $uri = root_uri() . $uri;
+        }
+        return $uri;
     }
 }

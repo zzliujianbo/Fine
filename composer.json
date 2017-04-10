@@ -6,7 +6,7 @@
         "danielstjules/Stringy": "^2.3",
         "phpfluent/cache": "^1.0",
         "illuminate/database": "^5.4",
-        "philo/laravel-blade": "^3.1"
+        "jenssegers/blade": "^1.1"
     },
     "autoload": {
         "psr-4": {
