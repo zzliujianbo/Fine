@@ -27,7 +27,9 @@ class Application
 
     protected $action;
 
-    protected $routeInfo;
+    protected $requestRoute;
+
+    protected $globalMiddlewares;
 
     public function version()
     {
@@ -55,9 +57,17 @@ class Application
         $this->viewDir = $this->rootDir . '/src/resources/views';
         $this->sessionDir = $this->rootDir . '/storage/session';
         $this->initSession();
+        $this->initENV();
+        $this->initORM();
         //$this->initEvent();
         //$this->initCache();
         //$this->initView();
+    }
+
+    private function initENV()
+    {
+        $dotenv = new \Dotenv\Dotenv($this->rootDir . '/src');
+        $dotenv->load();
     }
 
     private function initCache()
@@ -94,6 +104,30 @@ class Application
             });
         }
         $this->addSingleton($blade, 'view');
+    }
+
+    private function initORM()
+    {
+        // 参考 https://github.com/illuminate/database
+
+        $database = require_once $this->rootDir . '/src/config/database.php';
+
+        $capsule = new \Illuminate\Database\Capsule\Manager();
+
+        // 添加数据库连接
+        foreach ($database['connections'] as $key => $value) {
+            if ($database['default'] === $key) {
+                $capsule->addConnection($value);
+            }
+            else {
+                $capsule->addConnection($value,$key);
+            }
+        }
+
+        $capsule->setAsGlobal();
+
+        // 启动Eloquent
+        $capsule->bootEloquent();
     }
 
     public function getCache()
@@ -142,7 +176,8 @@ class Application
     public function dispatch($dispatcher)
     {
         // Fetch method and URI from somewhere
-        $httpMethod = $this->getMethod();
+        //$httpMethod = $this->getMethod();
+        $httpMethod = Request::method();
         $uri = $this->getPathInfo();
 
         // Strip query string (?foo=bar) and decode URI
@@ -166,16 +201,72 @@ class Application
 
     protected function handleFoundRoute($routeInfo)
     {
-        $handler = $routeInfo[1];
-        $vars = $routeInfo[2];
+        $route = $routeInfo[1];
+        $route['params'] = $routeInfo[2];
 
-        if(method_exists($handler['controller_class'], $handler['action'])) {
-            $this->routeInfo = $handler;
-            $this->controller = $handler['controller_class'];
-            $this->action = $handler['action'];
-            $controller = new $handler['controller_class']();
+        if(method_exists($route['controller_class'], $route['action'])) {
+            $this->controller = $route['controller_class'];
+            $this->action = $route['action'];
+
+            $middlewares = $this->controller::getMiddlewares();
+
+            //if (! $middlewares) {
+                //$middlewares[] = new Middleware();
+                //$middlewares[] = [
+                //    'class' => Middleware::class,
+                //    'only' => null,
+                //    'except' => null
+                //];
+            //}
+
+            $realMiddlewares = $this->globalMiddlewares;
+            if($middlewares){
+                foreach ($middlewares as $middleware) {
+                    if (isset($middleware['only']) && ! in_array($this->action, $middleware['only'])) {
+                        continue;
+                    }
+                    elseif (isset($middleware['except']) && in_array($this->action, $middleware['except'])) {
+                        continue;
+                    }
+                    $realMiddlewares[] = $middleware['class'];
+                }
+            }
+
+            if(isset($route['middleware'])){
+                $realMiddlewares[] = $route['middleware'];
+            }
+
+            if (! $realMiddlewares) {
+                $realMiddlewares[] = Middleware::class;
+            }
+
+            $this->requestRoute = [
+                'route' => $route,
+                'middlewareWarpper' => [
+                    'middlewares' => $realMiddlewares,
+                    'index' => 0
+                ]
+            ];
+
+            //return (new $realMiddlewares[0]())->handle($this->requestRoute);
+            $middleware = new $realMiddlewares[0]();
+            $result = $middleware->handle($this->requestRoute);
+            return $result;
+
+            //if($middlewares){
+            //    $middlewaresLength = count($middlewares);
+            //    for ($i=0; $i < $middlewaresLength; $i++) {
+            //        $middleware = new $middlewares[$i]($i + 1 <= $middlewaresLength ? $middlewares[$i + 1] : null);
+            //        $result = $middleware.handle($routeInfo);
+            //        if ($result) {
+            //            return $result;
+            //        }
+            //    }
+            //}
+
+            //$controller = new $handler['controller_class']();
             //return $controller->{$handler['action']}($vars);
-            return call_user_func_array([$controller, $handler['action']], $vars);
+            //return call_user_func_array([$controller, $handler['action']], $vars);
         } else {
             return 'Fine Method 404';
         }
@@ -215,7 +306,7 @@ class Application
     {
         return FastRoute\simpleDispatcher(function ($r) {
             foreach ($this->routes as $route) {
-                $r->addRoute($route['method'], $route['uri'], $route['action']);
+                $r->addRoute($route['method'], $route['uri'], $route['route']);
             }
         });
     }
@@ -224,7 +315,7 @@ class Application
     {
         return FastRoute\cachedDispatcher(function ($r) {
             foreach ($this->routes as $route) {
-                $r->addRoute($route['method'], $route['uri'], $route['action']);
+                $r->addRoute($route['method'], $route['uri'], $route['route']);
             }
         }, [
             //'cacheFile' => __DIR__ . getenv('CACHE_FILE_DIR') . '/route.cache',
@@ -265,24 +356,28 @@ class Application
     private function addRouteMap($controller_class, $prefix)
     {
         //$routeMap = $controller->getRouteMap();
-        $routeMap = $controller_class::routes();
+        //$routeMap = $controller_class::routes();
+        //$routeMap = $controller_class::$routes;
+        $routeMap = $controller_class::getRoutes();
         //$prefix =  trim($prefix, '/');
         foreach ($routeMap as $route) {
             //echo '/' . trim($prefix . '/' . ltrim($route['uri'], '/'), '/') . '<br />';
+            $uri = $prefix . '/' . ltrim($route['uri'], '/');
+            $route['controller_class'] = $controller_class;
             $this->addRoute(
                 strtoupper($route['method']),
-                $prefix . '/' . ltrim($route['uri'], '/'),
-                ['controller_class' => $controller_class, 'action' => $route['action']]
+                $uri,
+                $route
             );
         }
     }
 
 
-    protected function addRoute($method, $uri, $action)
+    protected function addRoute($method, $uri, $route)
     {
         $uri = '/'.trim($this->rootUri . '/' . $uri, '/');
-
-        $this->routes[] = ['method' => $method, 'uri' => $uri, 'action' => $action];
+        $route['uri'] = $uri;
+        $this->routes[] = ['method' => $method, 'uri' => $uri, 'route' => $route];
     }
 
     public function getPathInfo()
@@ -307,17 +402,13 @@ class Application
         return $this->action;
     }
 
-    public function getRoute()
+    public function getRequestRoute()
     {
-        return $this->routeInfo;
+        return $this->requestRoute;
     }
 
-    public function getMethod()
+    public function setGlobalMiddlewares(array $middlewares)
     {
-        if (isset($_POST['_method'])) {
-            return strtoupper($_POST['_method']);
-        } else {
-            return $_SERVER['REQUEST_METHOD'];
-        }
+        $this->globalMiddlewares = $middlewares;
     }
 }

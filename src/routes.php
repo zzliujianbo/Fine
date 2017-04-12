@@ -2,6 +2,12 @@
 
 use App\Controllers\HomeController;
 use App\Controllers\TestController;
+use Fine\Middlewares\CSRFTokenMiddleware;
 
-$app->mount(HomeController::class, '/');
-$app->mount(TestController::class, '/test');
+$app->setGlobalMiddlewares([
+    CSRFTokenMiddleware::class
+]);
+
+HomeController::mount(TestController::class, 'test');
+
+$app->mount(HomeController::class, '/home');

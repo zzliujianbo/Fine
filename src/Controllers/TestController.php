@@ -12,13 +12,9 @@ use App\Models\User;
 class TestController extends Controller
 {
 
-    public static function routes()
-    {
-        $route = [
-            ['method' => 'get', 'uri' => '/', 'action' => 'getIndex'],
-        ];
-        return $route;
-    }
+    static $routes = [
+        ['method' => 'get', 'uri' => '/', 'action' => 'getIndex'],
+    ];
 
     public function getIndex()
     {

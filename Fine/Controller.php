@@ -10,13 +10,18 @@ abstract class Controller
 
     protected $cache = null;
 
+    //TODO 父类的静态变量在子类中是共享的，如果子类没有重写静态变量，那么其他没有重写静态变量的子类也会受到影响。
+    //protected static $middlewares = null;
+
+    //protected static $routes = null;
+
+    private static $controllers = null;
+
     public function __construct()
     {
         $this->app = app();
         $this->cache = $this->app->getCache();
     }
-
-    private static $controller = [];
 
     public static function mount($controller_class, $prefix = null)
     {
@@ -32,8 +37,12 @@ abstract class Controller
                 $prefix = get_controller_prefix($controller_class);
             }
 
+            if (!self::$controllers) {
+                self::$controllers = [];
+            }
+
             //self::$controller[trim($prefix, '/')] = $controller_class;
-            self::$controller[static::class][trim($prefix, '/')] = $controller_class;
+            self::$controllers[static::class][trim($prefix, '/')] = $controller_class;
         } else {
             throw new Exception('controller is null');
         }
@@ -41,14 +50,18 @@ abstract class Controller
 
     public static function getController()
     {
-        return (isset(self::$controller[static::class]) ? self::$controller[static::class] : []);
+        return (isset(self::$controllers[static::class]) ? self::$controllers[static::class] : []);
     }
 
-    abstract public static function routes();
-
-
-    public function renderView($view, $data = null)
+    public static function getRoutes()
     {
-        return render_view($view, $data);
+        return (isset(static::$routes) ? static::$routes : null);
     }
+
+    public static function getMiddlewares()
+    {
+        return (isset(static::$middlewares) ? static::$middlewares : null);
+    }
+
+    //abstract public static function routes();
 }

@@ -165,3 +165,14 @@ if (! function_exists('url')) {
         return $uri;
     }
 }
+
+if (! function_exists('token')) {
+    function token()
+    {
+        if (function_exists('mcrypt_create_iv')) {
+            return bin2hex(mcrypt_create_iv(32, MCRYPT_DEV_URANDOM));
+        } else {
+            return bin2hex(openssl_random_pseudo_bytes(32));
+        }
+    }
+}
