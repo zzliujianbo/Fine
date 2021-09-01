@@ -66,7 +66,7 @@ class Application
 
     private function initENV()
     {
-        $dotenv = new \Dotenv\Dotenv($this->rootDir . '/src');
+        $dotenv = \Dotenv\Dotenv::create($this->rootDir . '/src');
         $dotenv->load();
     }
 

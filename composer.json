@@ -2,8 +2,8 @@
     "require": {
         "php": ">=5.3.0",
         "nikic/fast-route": "^1.0",
-        "vlucas/phpdotenv": "^2.2",
-        "danielstjules/Stringy": "^2.3",
+        "vlucas/phpdotenv": "^3.1",
+        "danielstjules/stringy": "^2.3",
         "phpfluent/cache": "^1.0",
         "illuminate/database": "^5.4",
         "jenssegers/blade": "^1.1"
